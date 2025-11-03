@@ -1,41 +1,29 @@
-// ✅ Import required packages
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
-import authRoutes from "./routes/auth.routes.js"; // make sure this path is correct
+import authRoutes from "./routes/auth.routes.js";
 
-// ✅ Load environment variables from .env
 dotenv.config();
-
-// ✅ Initialize express app
 const app = express();
 
-// ✅ Middleware setup
+app.use(cors());
 app.use(express.json());
 
-// ✅ Enable CORS (allow your frontend to talk to backend)
-app.use(
-  cors({
-    origin: "*", // you can later replace * with your Netlify URL for security
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+// ✅ MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => console.log("❌ MongoDB connection error:", err));
 
-// ✅ Default route for checking server status
+// ✅ Test route
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "NotesApp backend is running ✅" });
 });
 
-// ✅ Main API routes
-app.use("/api/auth", authRoutes);
+// ✅ Auth routes
+app.use("/auth", authRoutes);
 
-// ✅ Connect to MongoDB Atlas
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(() => console.log("✅ MongoDB connected successfully"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
-
-// ✅ Start the server
+// ✅ Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
