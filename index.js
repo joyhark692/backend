@@ -4,7 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
-import notesRoutes from "./routes/notes.routes.js";
+import notesRoutes from "./routes/notes.routes.js"; // ✅ add this
 
 dotenv.config();
 
@@ -12,14 +12,14 @@ const app = express();
 
 // Allow requests from anywhere (adjust for production to restrict origin)
 app.use(cors({
-  origin: true,
+  origin: true,          // for production you can set: ["https://<your-site>.netlify.app"]
   credentials: true
 }));
 
 app.use(express.json()); // parse JSON bodies
 
 // MongoDB connection
-const mongoUri = process.env.MONGO_URL;
+const mongoUri = process.env.MONGO_URL; // ✅ you’re using MONGO_URL on Render; keep it
 if (!mongoUri) {
   console.error("MONGO_URL missing in environment");
   process.exit(1);
@@ -37,6 +37,7 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/notes", notesRoutes); // ✅ mount notes routes here
 
 // JSON error handler (invalid JSON)
 app.use((err, req, res, next) => {
