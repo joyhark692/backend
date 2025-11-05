@@ -19,18 +19,35 @@ router.get("/", authenticateToken, async (req, res) => {
 router.post("/add", authenticateToken, async (req, res) => {
   try {
     const { title, content, isPinned } = req.body;
-    if (!title && !content)
+    if (!title && !content) {
       return res.status(400).json({ success: false, message: "Title or content required" });
-
+    }
     const newNote = new Note({
       userId: req.user.id,
       title,
       content,
-      isPinned: isPinned || false,
+      isPinned: Boolean(isPinned),
     });
-
     await newNote.save();
     res.status(201).json({ success: true, note: newNote });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Update note
+router.put("/:id", authenticateToken, async (req, res) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+
+    const { title, content, isPinned } = req.body;
+    if (title !== undefined) note.title = title;
+    if (content !== undefined) note.content = content;
+    if (isPinned !== undefined) note.isPinned = Boolean(isPinned);
+
+    await note.save();
+    res.json({ success: true, note });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -42,6 +59,40 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     const note = await Note.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
     if (!note) return res.status(404).json({ success: false, message: "Note not found" });
     res.json({ success: true, message: "Note deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Toggle pin
+router.put("/pin/:id", authenticateToken, async (req, res) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!note) return res.status(404).json({ success: false, message: "Note not found" });
+    note.isPinned = !note.isPinned;
+    await note.save();
+    res.json({ success: true, message: note.isPinned ? "Note pinned" : "Note unpinned", note });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Search
+router.get("/search", authenticateToken, async (req, res) => {
+  try {
+    const q = (req.query.q || "").trim();
+    const filter = q
+      ? {
+          userId: req.user.id,
+          $or: [
+            { title:   { $regex: q, $options: "i" } },
+            { content: { $regex: q, $options: "i" } },
+          ],
+        }
+      : { userId: req.user.id };
+
+    const notes = await Note.find(filter).sort({ updatedAt: -1 });
+    res.json({ success: true, notes });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
