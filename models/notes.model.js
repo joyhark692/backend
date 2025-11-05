@@ -1,6 +1,7 @@
-const mongoose = require("mongoose");
+// models/notes.model.js
+import mongoose from "mongoose";
 
-const NoteSchema = new mongoose.Schema(
+const noteSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -13,6 +14,10 @@ const NoteSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-NoteSchema.index({ userId: 1 });
 
-module.exports = mongoose.model("Note", NoteSchema);
+// Optional index (good for faster lookups)
+noteSchema.index({ userId: 1 });
+
+// ✅ Correct ES module export
+const Note = mongoose.model("Note", noteSchema);
+export default Note;
